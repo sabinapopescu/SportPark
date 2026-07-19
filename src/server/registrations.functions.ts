@@ -6,6 +6,7 @@ import { prisma } from "./db";
 import { authMiddleware } from "./auth-middleware";
 import { decryptPhone, encryptPhone } from "./crypto";
 import { ensureVisitorId, getVisitorId } from "./visitor";
+import { MOLDOVAN_PHONE_REGEX } from "@/lib/phone";
 import type { PublicRegistrant, Registration } from "@/lib/types";
 
 type RegistrationResult = { ok: true; registration: Registration } | { ok: false; reason: string };
@@ -13,7 +14,14 @@ type RegistrationResult = { ok: true; registration: Registration } | { ok: false
 const registerSchema = z.object({
   eventId: z.string().min(1),
   name: z.string().trim().min(2, "Introdu un nume valid.").max(80, "Numele este prea lung."),
-  phone: z.string().trim().max(30, "Telefon prea lung.").optional(),
+  phone: z
+    .string()
+    .trim()
+    .max(30, "Telefon prea lung.")
+    .optional()
+    .refine((v) => !v || MOLDOVAN_PHONE_REGEX.test(v), {
+      message: "Numărul trebuie să înceapă cu 0 și să aibă 9 cifre.",
+    }),
   // Hidden form field — bots fill every input, real users never see it.
   honeypot: z.string().optional(),
 });

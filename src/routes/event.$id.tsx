@@ -8,6 +8,7 @@ import {
   createRegistration,
   getRemainingMs,
 } from "@/lib/store";
+import { MOLDOVAN_PHONE_REGEX } from "@/lib/phone";
 import { formatDate, formatCountdown, firstNameLastInitial } from "@/lib/format";
 import { useLanguage, useT, categoryLabel } from "@/lib/i18n";
 import type { Registration } from "@/lib/types";
@@ -93,6 +94,10 @@ function EventDetail() {
     }
     if (phone && phone.length > 30) {
       setError(t.event.errPhoneTooLong);
+      return;
+    }
+    if (phone && !MOLDOVAN_PHONE_REGEX.test(phone)) {
+      setError(t.event.errPhoneInvalid);
       return;
     }
     try {
@@ -202,11 +207,13 @@ function EventDetail() {
                       {t.event.phoneLabel}
                     </label>
                     <input
+                      type="tel"
                       className="input-line"
-                      maxLength={30}
+                      maxLength={9}
+                      pattern="0[0-9]{8}"
                       placeholder={t.event.phonePlaceholder}
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
                     />
                   </div>
                   {error && <div className="text-sm text-primary">{error}</div>}
