@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   eventQueryOptions,
   eventRegistrantsQueryOptions,
+  myRegistrationQueryOptions,
   createRegistration,
   getRemainingMs,
 } from "@/lib/store";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/event/$id")({
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(eventQueryOptions(params.id));
     await context.queryClient.ensureQueryData(eventRegistrantsQueryOptions(params.id));
+    await context.queryClient.ensureQueryData(myRegistrationQueryOptions(params.id));
   },
   component: EventDetail,
   errorComponent: ({ error }) => (
@@ -40,6 +42,9 @@ function EventDetail() {
   const queryClient = useQueryClient();
   const { data: ev } = useSuspenseQuery(eventQueryOptions(id));
   const { data: regs } = useSuspenseQuery(eventRegistrantsQueryOptions(id));
+  // Restores the "you're registered" view across reloads/new tabs — the
+  // server matches it via a per-browser cookie, no account needed.
+  const { data: myReg } = useSuspenseQuery(myRegistrationQueryOptions(id));
   const { lang } = useLanguage();
   const t = useT();
 
@@ -50,7 +55,8 @@ function EventDetail() {
   const [phone, setPhone] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [confirmed, setConfirmed] = useState<Registration | null>(null);
+  const [justConfirmed, setJustConfirmed] = useState<Registration | null>(null);
+  const confirmed = justConfirmed ?? myReg;
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -65,7 +71,7 @@ function EventDetail() {
         setError(res.reason);
         return;
       }
-      setConfirmed(res.registration);
+      setJustConfirmed(res.registration);
       queryClient.invalidateQueries({ queryKey: ["events"] });
     },
   });

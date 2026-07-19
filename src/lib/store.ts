@@ -12,6 +12,7 @@ import {
   cancelRegistrationByToken,
   getEventRegistrants,
   getEventRegistrationsAdmin,
+  getMyRegistrationForEvent,
   getRegistrationByToken,
   adminCancelRegistration as adminCancelRegistrationFn,
 } from "@/server/registrations.functions";
@@ -42,6 +43,12 @@ export const eventRegistrationsAdminQueryOptions = (eventId: string) =>
   queryOptions({
     queryKey: ["events", eventId, "registrations-admin"],
     queryFn: () => getEventRegistrationsAdmin({ data: { eventId } }),
+  });
+
+export const myRegistrationQueryOptions = (eventId: string) =>
+  queryOptions({
+    queryKey: ["events", eventId, "my-registration"],
+    queryFn: () => getMyRegistrationForEvent({ data: { eventId } }),
   });
 
 export const registrationByTokenQueryOptions = (token: string) =>

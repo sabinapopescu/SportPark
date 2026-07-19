@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "./db";
 import { authMiddleware } from "./auth-middleware";
 import { decryptPhone, encryptPhone } from "./crypto";
+import { ensureVisitorId, getVisitorId } from "./visitor";
 import type { PublicRegistrant, Registration } from "@/lib/types";
 
 type RegistrationResult = { ok: true; registration: Registration } | { ok: false; reason: string };
@@ -23,6 +24,8 @@ export const createRegistration = createServerFn({ method: "POST" })
     if (data.honeypot) {
       return { ok: false, reason: "Eroare de validare." };
     }
+
+    const visitorId = ensureVisitorId();
 
     return prisma.$transaction(async (tx) => {
       // Lock the event row so two concurrent submissions against the last
@@ -56,12 +59,20 @@ export const createRegistration = createServerFn({ method: "POST" })
         return { ok: false, reason: "Din păcate, locurile s-au epuizat." };
       }
 
+      const alreadyRegistered = await tx.registration.findFirst({
+        where: { eventId: event.id, visitorId, cancelledAt: null },
+      });
+      if (alreadyRegistered) {
+        return { ok: false, reason: "Ești deja înregistrat la acest eveniment din acest browser." };
+      }
+
       const created = await tx.registration.create({
         data: {
           eventId: event.id,
           name: data.name,
           phone: data.phone ? encryptPhone(data.phone) : null,
           token: crypto.randomBytes(24).toString("base64url"),
+          visitorId,
         },
       });
 
@@ -89,6 +100,28 @@ export const getEventRegistrants = createServerFn({ method: "GET" })
       select: { id: true, name: true, createdAt: true },
     });
     return regs.map((r) => ({ id: r.id, name: r.name, createdAt: r.createdAt.toISOString() }));
+  });
+
+// This browser's active registration for an event, if any — lets the event
+// page restore the "you're registered" view after a reload without an account.
+export const getMyRegistrationForEvent = createServerFn({ method: "GET" })
+  .validator(z.object({ eventId: z.string().min(1) }))
+  .handler(async ({ data }): Promise<Registration | null> => {
+    const visitorId = getVisitorId();
+    if (!visitorId) return null;
+    const reg = await prisma.registration.findFirst({
+      where: { eventId: data.eventId, visitorId, cancelledAt: null },
+    });
+    if (!reg) return null;
+    return {
+      id: reg.id,
+      eventId: reg.eventId,
+      token: reg.token,
+      name: reg.name,
+      phone: reg.phone ? decryptPhone(reg.phone) : undefined,
+      createdAt: reg.createdAt.toISOString(),
+      cancelledAt: reg.cancelledAt?.toISOString(),
+    };
   });
 
 export const getRegistrationByToken = createServerFn({ method: "GET" })

@@ -61,9 +61,11 @@ model Registration {
   token       String    @unique
   name        String
   phone       String?   @db.Text // AES-256-GCM ciphertext, base64
+  visitorId   String? // opaque per-browser cookie id, scopes the one-registration-per-browser rule
   createdAt   DateTime  @default(now())
   cancelledAt DateTime?
 
   @@index([eventId])
+  @@index([eventId, visitorId])
   @@map("registrations")
 }
