@@ -1,9 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { getStore } from "@netlify/blobs";
 
-// Local-disk storage for banner images. Swap this module for an S3-compatible
-// client later — callers only depend on saveUpload()/readUpload() returning a
-// URL / bytes, not on the filesystem.
+// Banner image storage. On Netlify, functions have no persistent filesystem,
+// so uploads go to Netlify Blobs there; locally (and on any non-Netlify host)
+// they go to local disk. Callers only depend on saveUpload()/readUpload()
+// returning a URL / bytes, not on the storage backend.
+const useBlobs = process.env["NETLIFY"] === "true";
 export const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
 const MAX_BYTES = 3 * 1024 * 1024;
 // Raster formats every major browser can render inline via <img>. Deliberately
@@ -37,9 +40,13 @@ export async function saveUpload(file: File): Promise<{ url: string }> {
   assertUploadable(file);
   const ext = EXT_BY_MIME[file.type];
   const filename = `${crypto.randomUUID()}${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  await fs.writeFile(path.join(UPLOAD_DIR, filename), buffer);
+  const arrayBuffer = await file.arrayBuffer();
+  if (useBlobs) {
+    await getStore("uploads").set(filename, arrayBuffer);
+  } else {
+    await fs.mkdir(UPLOAD_DIR, { recursive: true });
+    await fs.writeFile(path.join(UPLOAD_DIR, filename), Buffer.from(arrayBuffer));
+  }
   return { url: `/api/uploads/${filename}` };
 }
 
@@ -48,9 +55,14 @@ export async function readUpload(
 ): Promise<{ bytes: Buffer; mime: string } | null> {
   if (!SAFE_FILENAME.test(filename)) return null;
   const ext = path.extname(filename);
+  const mime = MIME_BY_EXT[ext] ?? "application/octet-stream";
+  if (useBlobs) {
+    const data = await getStore("uploads").get(filename, { type: "arrayBuffer" });
+    return data ? { bytes: Buffer.from(data), mime } : null;
+  }
   try {
     const bytes = await fs.readFile(path.join(UPLOAD_DIR, filename));
-    return { bytes, mime: MIME_BY_EXT[ext] ?? "application/octet-stream" };
+    return { bytes, mime };
   } catch {
     return null;
   }
