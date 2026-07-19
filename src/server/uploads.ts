@@ -1,0 +1,57 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
+// Local-disk storage for banner images. Swap this module for an S3-compatible
+// client later — callers only depend on saveUpload()/readUpload() returning a
+// URL / bytes, not on the filesystem.
+export const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
+const MAX_BYTES = 3 * 1024 * 1024;
+// Raster formats every major browser can render inline via <img>. Deliberately
+// excludes SVG (can embed <script>, and browsers execute it if the upload URL
+// is ever opened directly rather than shown in an <img>) and HEIC/TIFF (safe,
+// but Chrome/Firefox/Edge can't display them — the banner would just look broken).
+const EXT_BY_MIME: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "image/avif": ".avif",
+  "image/bmp": ".bmp",
+};
+const MIME_BY_EXT: Record<string, string> = Object.fromEntries(
+  Object.entries(EXT_BY_MIME).map(([mime, ext]) => [ext, mime]),
+);
+// Exactly what saveUpload() generates: crypto.randomUUID() + a known extension.
+const SAFE_FILENAME = /^[0-9a-f-]{36}\.(jpg|png|webp|gif|avif|bmp)$/;
+
+export function assertUploadable(file: File) {
+  if (!(file.type in EXT_BY_MIME)) {
+    throw new Error("Fișierul trebuie să fie o imagine (JPEG, PNG, WEBP, GIF, AVIF sau BMP).");
+  }
+  if (file.size > MAX_BYTES) {
+    throw new Error("Imagine prea mare (max 3 MB).");
+  }
+}
+
+export async function saveUpload(file: File): Promise<{ url: string }> {
+  assertUploadable(file);
+  const ext = EXT_BY_MIME[file.type];
+  const filename = `${crypto.randomUUID()}${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  await fs.writeFile(path.join(UPLOAD_DIR, filename), buffer);
+  return { url: `/api/uploads/${filename}` };
+}
+
+export async function readUpload(
+  filename: string,
+): Promise<{ bytes: Buffer; mime: string } | null> {
+  if (!SAFE_FILENAME.test(filename)) return null;
+  const ext = path.extname(filename);
+  try {
+    const bytes = await fs.readFile(path.join(UPLOAD_DIR, filename));
+    return { bytes, mime: MIME_BY_EXT[ext] ?? "application/octet-stream" };
+  } catch {
+    return null;
+  }
+}
