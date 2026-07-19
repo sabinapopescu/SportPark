@@ -1,5 +1,5 @@
 [build]
-  command = "bun run build"
+  command = "bunx prisma generate && bun run build"
   publish = "dist/client"
   functions = "netlify/functions"
 
