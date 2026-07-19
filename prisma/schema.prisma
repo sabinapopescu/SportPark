@@ -29,11 +29,28 @@ model Session {
   @@map("sessions")
 }
 
+model Category {
+  id            String    @id @default(cuid())
+  titleRo       String
+  titleRu       String
+  descriptionRo String?   @db.Text
+  descriptionRu String?   @db.Text
+  photo         String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  events        Event[]
+
+  @@index([deletedAt])
+  @@map("categories")
+}
+
 model Event {
   id                   String         @id @default(cuid())
   title                String
   titleRu              String?
-  category             String
+  categoryId           String
+  category             Category       @relation(fields: [categoryId], references: [id])
   description          String         @db.Text
   descriptionRu        String?        @db.Text
   date                 String // YYYY-MM-DD
@@ -51,6 +68,7 @@ model Event {
 
   @@index([date])
   @@index([deletedAt])
+  @@index([categoryId])
   @@map("events")
 }
 

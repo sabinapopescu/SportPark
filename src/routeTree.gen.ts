@@ -9,17 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EventIdRouteImport } from './routes/event.$id'
 import { Route as CancelTokenRouteImport } from './routes/cancel.$token'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as ApiUploadsFilenameRouteImport } from './routes/api.uploads.$filename'
 import { Route as AdminEventsNewRouteImport } from './routes/admin.events.new'
+import { Route as AdminCategoriesNewRouteImport } from './routes/admin.categories.new'
 import { Route as AdminEventsIdRegistrantsRouteImport } from './routes/admin.events.$id.registrants'
 import { Route as AdminEventsIdEditRouteImport } from './routes/admin.events.$id.edit'
+import { Route as AdminCategoriesIdEditRouteImport } from './routes/admin.categories.$id.edit'
 
+const CategoriesRoute = CategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -50,6 +59,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiUploadsFilenameRoute = ApiUploadsFilenameRouteImport.update({
   id: '/api/uploads/$filename',
   path: '/api/uploads/$filename',
@@ -59,6 +73,11 @@ const AdminEventsNewRoute = AdminEventsNewRouteImport.update({
   id: '/events/new',
   path: '/events/new',
   getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriesNewRoute = AdminCategoriesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminCategoriesRoute,
 } as any)
 const AdminEventsIdRegistrantsRoute =
   AdminEventsIdRegistrantsRouteImport.update({
@@ -71,27 +90,40 @@ const AdminEventsIdEditRoute = AdminEventsIdEditRouteImport.update({
   path: '/events/$id/edit',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCategoriesIdEditRoute = AdminCategoriesIdEditRouteImport.update({
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => AdminCategoriesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/categories': typeof CategoriesRoute
+  '/admin/categories': typeof AdminCategoriesRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/cancel/$token': typeof CancelTokenRoute
   '/event/$id': typeof EventIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/categories/new': typeof AdminCategoriesNewRoute
   '/admin/events/new': typeof AdminEventsNewRoute
   '/api/uploads/$filename': typeof ApiUploadsFilenameRoute
+  '/admin/categories/$id/edit': typeof AdminCategoriesIdEditRoute
   '/admin/events/$id/edit': typeof AdminEventsIdEditRoute
   '/admin/events/$id/registrants': typeof AdminEventsIdRegistrantsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/categories': typeof CategoriesRoute
+  '/admin/categories': typeof AdminCategoriesRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/cancel/$token': typeof CancelTokenRoute
   '/event/$id': typeof EventIdRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/categories/new': typeof AdminCategoriesNewRoute
   '/admin/events/new': typeof AdminEventsNewRoute
   '/api/uploads/$filename': typeof ApiUploadsFilenameRoute
+  '/admin/categories/$id/edit': typeof AdminCategoriesIdEditRoute
   '/admin/events/$id/edit': typeof AdminEventsIdEditRoute
   '/admin/events/$id/registrants': typeof AdminEventsIdRegistrantsRoute
 }
@@ -99,12 +131,16 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/categories': typeof CategoriesRoute
+  '/admin/categories': typeof AdminCategoriesRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/cancel/$token': typeof CancelTokenRoute
   '/event/$id': typeof EventIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/categories/new': typeof AdminCategoriesNewRoute
   '/admin/events/new': typeof AdminEventsNewRoute
   '/api/uploads/$filename': typeof ApiUploadsFilenameRoute
+  '/admin/categories/$id/edit': typeof AdminCategoriesIdEditRoute
   '/admin/events/$id/edit': typeof AdminEventsIdEditRoute
   '/admin/events/$id/registrants': typeof AdminEventsIdRegistrantsRoute
 }
@@ -113,35 +149,47 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/categories'
+    | '/admin/categories'
     | '/admin/login'
     | '/cancel/$token'
     | '/event/$id'
     | '/admin/'
+    | '/admin/categories/new'
     | '/admin/events/new'
     | '/api/uploads/$filename'
+    | '/admin/categories/$id/edit'
     | '/admin/events/$id/edit'
     | '/admin/events/$id/registrants'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/categories'
+    | '/admin/categories'
     | '/admin/login'
     | '/cancel/$token'
     | '/event/$id'
     | '/admin'
+    | '/admin/categories/new'
     | '/admin/events/new'
     | '/api/uploads/$filename'
+    | '/admin/categories/$id/edit'
     | '/admin/events/$id/edit'
     | '/admin/events/$id/registrants'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/categories'
+    | '/admin/categories'
     | '/admin/login'
     | '/cancel/$token'
     | '/event/$id'
     | '/admin/'
+    | '/admin/categories/new'
     | '/admin/events/new'
     | '/api/uploads/$filename'
+    | '/admin/categories/$id/edit'
     | '/admin/events/$id/edit'
     | '/admin/events/$id/registrants'
   fileRoutesById: FileRoutesById
@@ -149,6 +197,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  CategoriesRoute: typeof CategoriesRoute
   CancelTokenRoute: typeof CancelTokenRoute
   EventIdRoute: typeof EventIdRoute
   ApiUploadsFilenameRoute: typeof ApiUploadsFilenameRoute
@@ -156,6 +205,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/categories': {
+      id: '/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof CategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -198,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/uploads/$filename': {
       id: '/api/uploads/$filename'
       path: '/api/uploads/$filename'
@@ -211,6 +274,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/events/new'
       preLoaderRoute: typeof AdminEventsNewRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/admin/categories/new': {
+      id: '/admin/categories/new'
+      path: '/new'
+      fullPath: '/admin/categories/new'
+      preLoaderRoute: typeof AdminCategoriesNewRouteImport
+      parentRoute: typeof AdminCategoriesRoute
     }
     '/admin/events/$id/registrants': {
       id: '/admin/events/$id/registrants'
@@ -226,10 +296,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEventsIdEditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/categories/$id/edit': {
+      id: '/admin/categories/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/admin/categories/$id/edit'
+      preLoaderRoute: typeof AdminCategoriesIdEditRouteImport
+      parentRoute: typeof AdminCategoriesRoute
+    }
   }
 }
 
+interface AdminCategoriesRouteChildren {
+  AdminCategoriesNewRoute: typeof AdminCategoriesNewRoute
+  AdminCategoriesIdEditRoute: typeof AdminCategoriesIdEditRoute
+}
+
+const AdminCategoriesRouteChildren: AdminCategoriesRouteChildren = {
+  AdminCategoriesNewRoute: AdminCategoriesNewRoute,
+  AdminCategoriesIdEditRoute: AdminCategoriesIdEditRoute,
+}
+
+const AdminCategoriesRouteWithChildren = AdminCategoriesRoute._addFileChildren(
+  AdminCategoriesRouteChildren,
+)
+
 interface AdminRouteChildren {
+  AdminCategoriesRoute: typeof AdminCategoriesRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminEventsNewRoute: typeof AdminEventsNewRoute
@@ -238,6 +330,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCategoriesRoute: AdminCategoriesRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminEventsNewRoute: AdminEventsNewRoute,
@@ -250,6 +343,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  CategoriesRoute: CategoriesRoute,
   CancelTokenRoute: CancelTokenRoute,
   EventIdRoute: EventIdRoute,
   ApiUploadsFilenameRoute: ApiUploadsFilenameRoute,

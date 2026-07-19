@@ -1,20 +1,19 @@
 export type Lang = "ro" | "ru";
 
-export type Category = "Fitness" | "CrossFit" | "Pilates" | "Tenis" | "Squash" | "Kids Park";
-
-export const CATEGORIES: Category[] = [
-  "Fitness",
-  "CrossFit",
-  "Pilates",
-  "Tenis",
-  "Squash",
-  "Kids Park",
-];
+export interface Category {
+  id: string;
+  titleRo: string;
+  titleRu: string;
+  descriptionRo?: string;
+  descriptionRu?: string;
+  photo?: string;
+}
 
 export interface TrainingEvent {
   id: string;
   title: string;
   titleRu?: string;
+  categoryId: string;
   category: Category;
   description: string;
   descriptionRu?: string;

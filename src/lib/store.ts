@@ -8,6 +8,13 @@ import {
   deleteEvent as deleteEventFn,
 } from "@/server/events.functions";
 import {
+  listCategories,
+  getCategory,
+  createCategory,
+  updateCategory,
+  deleteCategory as deleteCategoryFn,
+} from "@/server/categories.functions";
+import {
   createRegistration as createRegistrationFn,
   cancelRegistrationByToken,
   getEventRegistrants,
@@ -19,9 +26,7 @@ import {
 import { login, logout, getSession } from "@/server/auth.functions";
 import { uploadBannerImage as uploadBannerImageFn } from "@/server/uploads.functions";
 import { getLanguage, setLanguage } from "@/server/language.functions";
-import type { Category, Lang, TrainingEvent } from "@/lib/types";
-
-export { CATEGORIES } from "@/lib/types";
+import type { Lang, TrainingEvent } from "@/lib/types";
 
 // ---- Query options — shared cache keys for loaders (ensureQueryData) and
 // components (useSuspenseQuery), so a loader's fetch and a component's read
@@ -57,6 +62,12 @@ export const registrationByTokenQueryOptions = (token: string) =>
     queryFn: () => getRegistrationByToken({ data: { token } }),
   });
 
+export const categoriesQueryOptions = () =>
+  queryOptions({ queryKey: ["categories"], queryFn: () => listCategories() });
+
+export const categoryQueryOptions = (id: string) =>
+  queryOptions({ queryKey: ["categories", id], queryFn: () => getCategory({ data: { id } }) });
+
 export const sessionQueryOptions = () =>
   queryOptions({ queryKey: ["session"], queryFn: () => getSession(), staleTime: 0 });
 
@@ -86,10 +97,34 @@ export function adminCancelRegistration(id: string) {
   return adminCancelRegistrationFn({ data: { id } });
 }
 
+export type CategoryInput = {
+  titleRo: string;
+  titleRu: string;
+  descriptionRo?: string;
+  descriptionRu?: string;
+  photo?: string;
+};
+
+export function saveNewCategory(input: CategoryInput) {
+  return createCategory({ data: input });
+}
+
+export function saveExistingCategory(id: string, input: CategoryInput) {
+  return updateCategory({ data: { ...input, id } });
+}
+
+export function deleteCategory(id: string) {
+  return deleteCategoryFn({ data: { id } });
+}
+
+export function newBlankCategory(): CategoryInput {
+  return { titleRo: "", titleRu: "" };
+}
+
 export type EventInput = {
   title: string;
   titleRu?: string;
-  category: Category;
+  categoryId: string;
   description: string;
   descriptionRu?: string;
   date: string;
@@ -128,6 +163,9 @@ export function uploadBannerImage(file: File) {
   return uploadBannerImageFn({ data: formData });
 }
 
+// Category photos use the same generic image-upload endpoint as event banners.
+export const uploadCategoryPhoto = uploadBannerImage;
+
 // ---- Pure time helpers — no network involved. ----
 
 export function eventStart(ev: TrainingEvent): Date {
@@ -152,7 +190,7 @@ export function newBlankEvent(): EventInput {
   const pad = (n: number) => String(n).padStart(2, "0");
   return {
     title: "",
-    category: "Fitness",
+    categoryId: "",
     description: "",
     date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
     startTime: "18:00",

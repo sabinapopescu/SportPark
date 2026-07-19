@@ -145,6 +145,9 @@ function Header() {
           <img src="/sport-park-21f9d64c.webp" alt="SportPark" className="h-9 w-auto md:h-11" />
         </Link>
         <nav className="flex items-center gap-3 md:gap-6">
+          <Link to="/categories" className="nav-link hidden md:inline">
+            {t.header.categories}
+          </Link>
           <LangSwitch />
           <a
             href="tel:078889889"

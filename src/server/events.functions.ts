@@ -4,15 +4,26 @@ import { z } from "zod";
 
 import { prisma } from "./db";
 import { authMiddleware } from "./auth-middleware";
-import { CATEGORIES, type TrainingEvent } from "@/lib/types";
-import type { Event as EventRow } from "@/generated/prisma/client";
+import type { TrainingEvent } from "@/lib/types";
+import type { Event as EventRow, Category as CategoryRow } from "@/generated/prisma/client";
 
-function toTrainingEvent(ev: EventRow, registeredCount: number): TrainingEvent {
+function toTrainingEvent(
+  ev: EventRow & { category: CategoryRow },
+  registeredCount: number,
+): TrainingEvent {
   return {
     id: ev.id,
     title: ev.title,
     titleRu: ev.titleRu ?? undefined,
-    category: ev.category as TrainingEvent["category"],
+    categoryId: ev.categoryId,
+    category: {
+      id: ev.category.id,
+      titleRo: ev.category.titleRo,
+      titleRu: ev.category.titleRu,
+      descriptionRo: ev.category.descriptionRo ?? undefined,
+      descriptionRu: ev.category.descriptionRu ?? undefined,
+      photo: ev.category.photo ?? undefined,
+    },
     description: ev.description,
     descriptionRu: ev.descriptionRu ?? undefined,
     date: ev.date,
@@ -32,7 +43,7 @@ function toTrainingEvent(ev: EventRow, registeredCount: number): TrainingEvent {
 const eventInputSchema = z.object({
   title: z.string().trim().min(1, "Titlul este obligatoriu.").max(120),
   titleRu: z.string().trim().max(120).optional(),
-  category: z.enum(CATEGORIES as [string, ...string[]]),
+  categoryId: z.string().min(1, "Categoria este obligatorie."),
   description: z.string().max(800).optional().default(""),
   descriptionRu: z.string().max(800).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Dată invalidă."),
@@ -49,6 +60,7 @@ export const listEvents = createServerFn({ method: "GET" }).handler(async () => 
   const events = await prisma.event.findMany({
     where: { deletedAt: null },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    include: { category: true },
   });
   const counts = await prisma.registration.groupBy({
     by: ["eventId"],
@@ -62,7 +74,10 @@ export const listEvents = createServerFn({ method: "GET" }).handler(async () => 
 export const getEvent = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().min(1) }))
   .handler(async ({ data }) => {
-    const event = await prisma.event.findUnique({ where: { id: data.id } });
+    const event = await prisma.event.findUnique({
+      where: { id: data.id },
+      include: { category: true },
+    });
     if (!event || event.deletedAt) throw notFound();
     const registeredCount = await prisma.registration.count({
       where: { eventId: event.id, cancelledAt: null },
@@ -78,7 +93,7 @@ export const createEvent = createServerFn({ method: "POST" })
       data: {
         title: data.title,
         titleRu: data.titleRu?.trim() || null,
-        category: data.category,
+        categoryId: data.categoryId,
         description: data.description ?? "",
         descriptionRu: data.descriptionRu?.trim() || null,
         date: data.date,
@@ -92,6 +107,7 @@ export const createEvent = createServerFn({ method: "POST" })
           ? new Date(data.registrationDeadline)
           : null,
       },
+      include: { category: true },
     });
     return toTrainingEvent(created, 0);
   });
@@ -107,7 +123,7 @@ export const updateEvent = createServerFn({ method: "POST" })
       data: {
         title: data.title,
         titleRu: data.titleRu?.trim() || null,
-        category: data.category,
+        categoryId: data.categoryId,
         description: data.description ?? "",
         descriptionRu: data.descriptionRu?.trim() || null,
         date: data.date,
@@ -121,6 +137,7 @@ export const updateEvent = createServerFn({ method: "POST" })
           ? new Date(data.registrationDeadline)
           : null,
       },
+      include: { category: true },
     });
     const registeredCount = await prisma.registration.count({
       where: { eventId: updated.id, cancelledAt: null },

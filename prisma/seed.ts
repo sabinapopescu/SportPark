@@ -42,17 +42,31 @@ async function main() {
 
   await prisma.registration.deleteMany();
   await prisma.event.deleteMany();
+  await prisma.category.deleteMany();
   await prisma.session.deleteMany();
   await prisma.admin.deleteMany();
 
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
   await prisma.admin.create({ data: { email: ADMIN_EMAIL, passwordHash } });
 
+  const categoryData = [
+    { titleRo: "Fitness", titleRu: "Фитнес" },
+    { titleRo: "CrossFit", titleRu: "Кроссфит" },
+    { titleRo: "Pilates", titleRu: "Пилатес" },
+    { titleRo: "Tenis", titleRu: "Теннис" },
+    { titleRo: "Squash", titleRu: "Сквош" },
+    { titleRo: "Kids Park", titleRu: "Кидс Парк" },
+  ];
+  const categories = await Promise.all(
+    categoryData.map((c) => prisma.category.create({ data: c })),
+  );
+  const categoryIdByName = new Map(categories.map((c) => [c.titleRo, c.id]));
+
   const events = await Promise.all([
     prisma.event.create({
       data: {
         title: "CrossFit — Antrenament de grup",
-        category: "CrossFit",
+        categoryId: categoryIdByName.get("CrossFit")!,
         description: "Workout of the Day - intensitate ridicată, ritm alert. Vino pregătit!",
         date: daysFromNow(0),
         startTime: "18:00",
@@ -65,7 +79,7 @@ async function main() {
     prisma.event.create({
       data: {
         title: "Fitness — Antrenament funcțional",
-        category: "Fitness",
+        categoryId: categoryIdByName.get("Fitness")!,
         description: "Antrenament de forță și cardio, potrivit pentru toate nivelurile.",
         date: daysFromNow(0),
         startTime: "19:30",
@@ -78,7 +92,7 @@ async function main() {
     prisma.event.create({
       data: {
         title: "Pilates — Clasă de grup",
-        category: "Pilates",
+        categoryId: categoryIdByName.get("Pilates")!,
         description: "Sesiune relaxantă de Pilates, focus pe postură și respirație.",
         date: daysFromNow(1),
         startTime: "18:30",
@@ -91,7 +105,7 @@ async function main() {
     prisma.event.create({
       data: {
         title: "Kids Park — Antrenament copii",
-        category: "Kids Park",
+        categoryId: categoryIdByName.get("Kids Park")!,
         description: "Program pentru copii 6-10 ani. Jocuri, agilitate, coordonare.",
         date: daysFromNow(1),
         startTime: "16:00",
@@ -104,7 +118,7 @@ async function main() {
     prisma.event.create({
       data: {
         title: "Tenis — Antrenament de grup",
-        category: "Tenis",
+        categoryId: categoryIdByName.get("Tenis")!,
         description:
           "Antrenament pentru cei care descoperă tenisul. Rachete disponibile la fața locului.",
         date: daysFromNow(2),
@@ -119,7 +133,7 @@ async function main() {
     prisma.event.create({
       data: {
         title: "Squash — Sesiune de grup",
-        category: "Squash",
+        categoryId: categoryIdByName.get("Squash")!,
         description: "Sesiune deschisă de squash, jucători rotativi.",
         date: daysFromNow(3),
         startTime: "19:00",
@@ -132,7 +146,7 @@ async function main() {
     prisma.event.create({
       data: {
         title: "CrossFit — Antrenament de seară",
-        category: "CrossFit",
+        categoryId: categoryIdByName.get("CrossFit")!,
         description: "Sesiune avansată, doar pentru membri cu experiență.",
         date: daysFromNow(4),
         startTime: "20:00",
@@ -147,7 +161,7 @@ async function main() {
     prisma.event.create({
       data: {
         title: "Fitness — Antrenament de dimineață (trecut)",
-        category: "Fitness",
+        categoryId: categoryIdByName.get("Fitness")!,
         description: "Antrenament matinal de forță și cardio.",
         date: daysFromNow(-2),
         startTime: "07:00",

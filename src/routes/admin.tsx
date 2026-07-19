@@ -49,6 +49,12 @@ function AdminLayout() {
             <Link to="/admin" className={`nav-link ${pathname === "/admin" ? "active" : ""}`}>
               {t.admin.nav.events}
             </Link>
+            <Link
+              to="/admin/categories"
+              className={`nav-link ${pathname.startsWith("/admin/categories") ? "active" : ""}`}
+            >
+              {t.admin.nav.categories}
+            </Link>
             <Link to="/" className="nav-link">
               {t.admin.nav.viewSite}
             </Link>

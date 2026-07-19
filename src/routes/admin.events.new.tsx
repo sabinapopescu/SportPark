@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
-  CATEGORIES,
+  categoriesQueryOptions,
   eventQueryOptions,
   newBlankEvent,
   saveNewEvent,
@@ -11,9 +11,9 @@ import {
   type EventInput,
 } from "@/lib/store";
 import { useLanguage, useT, categoryLabel } from "@/lib/i18n";
-import type { Category } from "@/lib/types";
 
 export const Route = createFileRoute("/admin/events/new")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(categoriesQueryOptions()),
   component: () => <EventForm mode="new" />,
 });
 
@@ -58,7 +58,11 @@ function EventFormBody({
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [ev, setEv] = useState<EventInput>(initial);
+  const { data: categories } = useSuspenseQuery(categoriesQueryOptions());
+  const [ev, setEv] = useState<EventInput>(() => ({
+    ...initial,
+    categoryId: initial.categoryId || categories[0]?.id || "",
+  }));
   const [warning, setWarning] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const { lang } = useLanguage();
@@ -96,6 +100,10 @@ function EventFormBody({
     setWarning(null);
     if (!ev.title.trim()) {
       setWarning(t.admin.form.titleRequired);
+      return;
+    }
+    if (!ev.categoryId) {
+      setWarning(t.admin.form.noCategories);
       return;
     }
     if (ev.maxRegistrations < currentRegs) {
@@ -139,15 +147,20 @@ function EventFormBody({
           <Field label={t.admin.form.category}>
             <select
               className="input-line bg-surface-2"
-              value={ev.category}
-              onChange={(e) => update("category", e.target.value as Category)}
+              required
+              disabled={categories.length === 0}
+              value={ev.categoryId}
+              onChange={(e) => update("categoryId", e.target.value)}
             >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
                   {categoryLabel(c, lang)}
                 </option>
               ))}
             </select>
+            {categories.length === 0 && (
+              <div className="mt-1 text-xs text-primary">{t.admin.form.noCategories}</div>
+            )}
           </Field>
           <Field label={t.admin.form.location}>
             <input

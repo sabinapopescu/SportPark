@@ -3,15 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { saveLanguage } from "@/lib/store";
 import type { Category, Lang } from "@/lib/types";
 
-export const categoryLabels: Record<Category, Record<Lang, string>> = {
-  Fitness: { ro: "Fitness", ru: "Фитнес" },
-  CrossFit: { ro: "CrossFit", ru: "Кроссфит" },
-  Pilates: { ro: "Pilates", ru: "Пилатес" },
-  Tenis: { ro: "Tenis", ru: "Теннис" },
-  Squash: { ro: "Squash", ru: "Сквош" },
-  "Kids Park": { ro: "Kids Park", ru: "Кидс Парк" },
-};
-
 const dict = {
   ro: {
     siteTitle: "SportPark — Înregistrare la antrenamente",
@@ -22,7 +13,7 @@ const dict = {
       title: "Program antrenamente — SportPark",
       description: "Vezi programul antrenamentelor de grup și rezervă-ți locul.",
     },
-    header: { callAria: (phone: string) => `Sună ${phone}` },
+    header: { callAria: (phone: string) => `Sună ${phone}`, categories: "Categorii" },
     notFound: {
       title: "404",
       subtitle: "Pagină negăsită",
@@ -62,7 +53,7 @@ const dict = {
       notFoundBack: "Înapoi la program",
       headingConfirm: "Confirmare",
       headingRegister: "Înregistrare",
-      confirmedTitle: "Ești înregistrat! ✅",
+      confirmedTitle: "Ești înregistrat!",
       confirmedBody: (title: string, date: string, time: string) =>
         `Te așteptăm la ${title} pe ${date}, ora ${time}.`,
       cancelRegistration: "Anulează înregistrarea",
@@ -100,8 +91,19 @@ const dict = {
       confirm: "Confirmă anularea",
       cancel: "Renunță",
     },
+    categoriesPage: {
+      eyebrow: "Antrenamente",
+      heading: "Categoriile noastre",
+      subtitle: "Descoperă tipurile de antrenamente disponibile la SportPark.",
+      empty: "Nu sunt categorii disponibile momentan.",
+    },
     admin: {
-      nav: { events: "Evenimente", viewSite: "Vezi site", logout: "Ieșire" },
+      nav: {
+        events: "Evenimente",
+        categories: "Categorii",
+        viewSite: "Vezi site",
+        logout: "Ieșire",
+      },
       login: {
         heading: "Autentificare admin",
         email: "Email",
@@ -160,6 +162,7 @@ const dict = {
         saving: "Se salvează...",
         save: "Salvează",
         cancel: "Renunță",
+        noCategories: "Nicio categorie disponibilă. Creează mai întâi o categorie.",
       },
       registrants: {
         back: "← Înapoi",
@@ -177,6 +180,40 @@ const dict = {
         cancelAction: "Anulează",
         cancelConfirm: (name: string) => `Anulezi înregistrarea pentru ${name}?`,
       },
+      categoriesDashboard: {
+        eyebrow: "Admin",
+        heading: "Categorii",
+        newCategory: "+ Categorie nouă",
+        empty: "Nicio categorie. Creează prima.",
+        colPhoto: "Foto",
+        colTitleRo: "Titlu (RO)",
+        colTitleRu: "Titlu (RU)",
+        colActions: "Acțiuni",
+        edit: "Editează",
+        delete: "Șterge",
+        deleteConfirmTitle: "Șterge categoria?",
+        deleteConfirmBody:
+          "Această acțiune va ascunde categoria din listă. Evenimentele existente rămân neschimbate.",
+        cancel: "Renunță",
+      },
+      categoryForm: {
+        back: "← Înapoi",
+        headingNew: "Categorie nouă",
+        headingEdit: "Editează categoria",
+        titleRo: "Titlu (RO) *",
+        titleRu: "Titlu (RU) *",
+        descriptionRo: "Descriere (RO)",
+        descriptionRu: "Descriere (RU)",
+        photo: "Fotografie",
+        uploading: "Se încarcă...",
+        titleRoRequired: "Titlul (RO) este obligatoriu.",
+        titleRuRequired: "Titlul (RU) este obligatoriu.",
+        saveError: "Eroare la salvare.",
+        uploadError: "Eroare la încărcarea imaginii.",
+        saving: "Se salvează...",
+        save: "Salvează",
+        cancel: "Renunță",
+      },
     },
   },
   ru: {
@@ -188,7 +225,7 @@ const dict = {
       title: "Расписание тренировок — SportPark",
       description: "Смотрите расписание групповых тренировок и забронируйте место.",
     },
-    header: { callAria: (phone: string) => `Позвонить ${phone}` },
+    header: { callAria: (phone: string) => `Позвонить ${phone}`, categories: "Категории" },
     notFound: {
       title: "404",
       subtitle: "Страница не найдена",
@@ -228,7 +265,7 @@ const dict = {
       notFoundBack: "Назад к расписанию",
       headingConfirm: "Подтверждение",
       headingRegister: "Регистрация",
-      confirmedTitle: "Вы зарегистрированы! ✅",
+      confirmedTitle: "Вы зарегистрированы!",
       confirmedBody: (title: string, date: string, time: string) =>
         `Ждём вас на «${title}» ${date} в ${time}.`,
       cancelRegistration: "Отменить регистрацию",
@@ -266,8 +303,19 @@ const dict = {
       confirm: "Подтвердить отмену",
       cancel: "Назад",
     },
+    categoriesPage: {
+      eyebrow: "Тренировки",
+      heading: "Наши категории",
+      subtitle: "Узнайте о видах тренировок, доступных в SportPark.",
+      empty: "На данный момент категории недоступны.",
+    },
     admin: {
-      nav: { events: "Тренировки", viewSite: "Открыть сайт", logout: "Выход" },
+      nav: {
+        events: "Тренировки",
+        categories: "Категории",
+        viewSite: "Открыть сайт",
+        logout: "Выход",
+      },
       login: {
         heading: "Вход администратора",
         email: "Email",
@@ -326,6 +374,7 @@ const dict = {
         saving: "Сохранение...",
         save: "Сохранить",
         cancel: "Отмена",
+        noCategories: "Нет доступных категорий. Сначала создайте категорию.",
       },
       registrants: {
         back: "← Назад",
@@ -342,6 +391,40 @@ const dict = {
         activeStatus: "Активен",
         cancelAction: "Отменить",
         cancelConfirm: (name: string) => `Отменить регистрацию для ${name}?`,
+      },
+      categoriesDashboard: {
+        eyebrow: "Админ",
+        heading: "Категории",
+        newCategory: "+ Новая категория",
+        empty: "Нет категорий. Создайте первую.",
+        colPhoto: "Фото",
+        colTitleRo: "Название (RO)",
+        colTitleRu: "Название (RU)",
+        colActions: "Действия",
+        edit: "Редактировать",
+        delete: "Удалить",
+        deleteConfirmTitle: "Удалить категорию?",
+        deleteConfirmBody:
+          "Это действие скроет категорию из списка. Существующие тренировки не изменятся.",
+        cancel: "Отмена",
+      },
+      categoryForm: {
+        back: "← Назад",
+        headingNew: "Новая категория",
+        headingEdit: "Редактировать категорию",
+        titleRo: "Название (RO) *",
+        titleRu: "Название (RU) *",
+        descriptionRo: "Описание (RO)",
+        descriptionRu: "Описание (RU)",
+        photo: "Фотография",
+        uploading: "Загрузка...",
+        titleRoRequired: "Название (RO) обязательно.",
+        titleRuRequired: "Название (RU) обязательно.",
+        saveError: "Ошибка при сохранении.",
+        uploadError: "Ошибка при загрузке изображения.",
+        saving: "Сохранение...",
+        save: "Сохранить",
+        cancel: "Отмена",
       },
     },
   },
@@ -393,5 +476,9 @@ export function getDict(lang: Lang): Dict {
 }
 
 export function categoryLabel(category: Category, lang: Lang): string {
-  return categoryLabels[category][lang];
+  return lang === "ru" ? category.titleRu : category.titleRo;
+}
+
+export function categoryDescription(category: Category, lang: Lang): string | undefined {
+  return lang === "ru" ? category.descriptionRu : category.descriptionRo;
 }
