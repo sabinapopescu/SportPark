@@ -32,8 +32,8 @@ const dict = {
       subtitle:
         "Rezervă-ți locul la următoarele sesiuni. Fără cont, doar numele și, opțional, telefonul.",
       statSessions: (n: number) => `${n} sesiuni azi`,
-      statSeats: (n: number) => `${n} locuri rezervate`,
-      statCategories: "6 categorii",
+      statSeatsAvailable: (avail: number, total: number) => `${avail}/${total} locuri libere azi`,
+      statCategories: (n: number) => `${n} categorii`,
       tabToday: "Azi",
       tabTomorrow: "Mâine",
       tabWeek: "Săptămâna aceasta",
@@ -244,8 +244,9 @@ const dict = {
       subtitle:
         "Забронируйте место на ближайшие занятия. Без регистрации — только имя и, при желании, телефон.",
       statSessions: (n: number) => `${n} занятий сегодня`,
-      statSeats: (n: number) => `${n} мест забронировано`,
-      statCategories: "6 категорий",
+      statSeatsAvailable: (avail: number, total: number) =>
+        `${avail}/${total} свободных мест сегодня`,
+      statCategories: (n: number) => `${n} категорий`,
       tabToday: "Сегодня",
       tabTomorrow: "Завтра",
       tabWeek: "Эта неделя",
@@ -344,8 +345,7 @@ const dict = {
         edit: "Редактировать",
         delete: "Удалить",
         deleteConfirmTitle: "Удалить тренировку?",
-        deleteConfirmBody:
-          "Это действие скроет тренировку из списка (регистрации сохранятся).",
+        deleteConfirmBody: "Это действие скроет тренировку из списка (регистрации сохранятся).",
         cancel: "Отмена",
       },
       form: {

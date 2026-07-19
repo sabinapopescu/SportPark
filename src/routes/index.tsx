@@ -2,7 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState, type ElementType } from "react";
 import { Flame, Users, CalendarDays } from "lucide-react";
-import { eventsQueryOptions, getRemainingMs, eventStart, languageQueryOptions } from "@/lib/store";
+import {
+  eventsQueryOptions,
+  categoriesQueryOptions,
+  getRemainingMs,
+  eventStart,
+  languageQueryOptions,
+} from "@/lib/store";
 import { formatShortDate, formatCountdown } from "@/lib/format";
 import { useLanguage, useT, categoryLabel, getDict } from "@/lib/i18n";
 import type { TrainingEvent, Lang } from "@/lib/types";
@@ -15,7 +21,11 @@ export const Route = createFileRoute("/")({
       meta: [{ title: t.meta.title }, { name: "description", content: t.meta.description }],
     };
   },
-  loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions()),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(eventsQueryOptions()),
+      context.queryClient.ensureQueryData(categoriesQueryOptions()),
+    ]),
   component: SchedulePage,
 });
 
@@ -27,6 +37,7 @@ function dateKey(d: Date) {
 
 function SchedulePage() {
   const { data: events } = useSuspenseQuery(eventsQueryOptions());
+  const { data: categories } = useSuspenseQuery(categoriesQueryOptions());
   const [tab, setTab] = useState<Tab>("today");
   const t = useT();
 
@@ -48,17 +59,19 @@ function SchedulePage() {
     return upcoming.filter((e) => eventStart(e) <= weekEnd);
   }, [tab, events]);
 
-  const todayCount = useMemo(() => {
+  const todayEvents = useMemo(() => {
     const now = new Date();
     const today = dateKey(now);
-    return events.filter((e) => e.date === today && eventStart(e).getTime() > now.getTime())
-      .length;
+    return events.filter((e) => e.date === today && eventStart(e).getTime() > now.getTime());
   }, [events]);
 
-  const liveSeats = useMemo(
-    () => events.reduce((sum, e) => sum + (e.registeredCount ?? 0), 0),
-    [events],
-  );
+  const todayCount = todayEvents.length;
+
+  const seatsToday = useMemo(() => {
+    const total = todayEvents.reduce((sum, e) => sum + e.maxRegistrations, 0);
+    const taken = todayEvents.reduce((sum, e) => sum + (e.registeredCount ?? 0), 0);
+    return { available: Math.max(0, total - taken), total };
+  }, [todayEvents]);
 
   return (
     <div className="relative overflow-hidden">
@@ -93,7 +106,8 @@ function SchedulePage() {
       <div className="mx-auto max-w-6xl px-4 py-8 md:py-16">
         <div className="animate-fade-up mb-8 md:mb-12">
           <h1 className="max-w-xs text-4xl sm:max-w-none md:text-6xl">
-            {t.home.titleBase} <span className="text-gradient font-extrabold">{t.home.titleHighlight}</span>
+            {t.home.titleBase}{" "}
+            <span className="text-gradient font-extrabold">{t.home.titleHighlight}</span>
           </h1>
           <p className="mt-3 max-w-xl text-body">{t.home.subtitle}</p>
 
@@ -104,12 +118,15 @@ function SchedulePage() {
             </div>
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-surface-2 px-3 py-1.5 text-xs text-body sm:px-4 sm:py-2 sm:text-sm">
               <Users className="h-4 w-4 shrink-0 text-primary" />
-              {t.home.statSeats(liveSeats)}
+              {t.home.statSeatsAvailable(seatsToday.available, seatsToday.total)}
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-surface-2 px-3 py-1.5 text-xs text-body sm:px-4 sm:py-2 sm:text-sm">
+            <Link
+              to="/categories"
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-surface-2 px-3 py-1.5 text-xs text-body transition-colors hover:border-primary hover:text-primary sm:px-4 sm:py-2 sm:text-sm"
+            >
               <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
-              {t.home.statCategories}
-            </div>
+              {t.home.statCategories(categories.length)}
+            </Link>
           </div>
         </div>
 
@@ -123,7 +140,11 @@ function SchedulePage() {
               onClick={() => setTab(tb)}
               className={`tab-pill shrink-0 whitespace-nowrap ${tab === tb ? "active" : ""}`}
             >
-              {tb === "today" ? t.home.tabToday : tb === "tomorrow" ? t.home.tabTomorrow : t.home.tabWeek}
+              {tb === "today"
+                ? t.home.tabToday
+                : tb === "tomorrow"
+                  ? t.home.tabTomorrow
+                  : t.home.tabWeek}
             </button>
           ))}
         </div>
@@ -183,7 +204,9 @@ function EventCard({ ev, delay = 0 }: { ev: TrainingEvent; delay?: number }) {
           ) : full ? (
             <span className="badge-muted">{t.home.card.full}</span>
           ) : (
-            <span className="badge-muted">{t.home.card.closesIn(formatCountdown(remaining, lang))}</span>
+            <span className="badge-muted">
+              {t.home.card.closesIn(formatCountdown(remaining, lang))}
+            </span>
           )}
         </div>
       </div>
@@ -202,7 +225,9 @@ function EventCard({ ev, delay = 0 }: { ev: TrainingEvent; delay?: number }) {
         </div>
 
         <div className="mt-3 flex items-center justify-between">
-          <div className="text-sm text-body-muted">{t.home.card.seatsOccupied(registered, ev.maxRegistrations)}</div>
+          <div className="text-sm text-body-muted">
+            {t.home.card.seatsOccupied(registered, ev.maxRegistrations)}
+          </div>
           {disabled ? (
             <span className="text-xs font-semibold uppercase tracking-widest text-body-muted">
               {closed ? t.home.card.regClosed : t.home.card.full}

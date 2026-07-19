@@ -6,7 +6,13 @@ import { getStore } from "@netlify/blobs";
 // so uploads go to Netlify Blobs there; locally (and on any non-Netlify host)
 // they go to local disk. Callers only depend on saveUpload()/readUpload()
 // returning a URL / bytes, not on the storage backend.
-const useBlobs = process.env["NETLIFY"] === "true";
+// `NETLIFY=true` is only reliably set at build time, not in the deployed
+// function's runtime — so also detect the Lambda runtime directly (Netlify
+// Functions run on AWS Lambda under the hood, which always sets these).
+const useBlobs =
+  process.env["NETLIFY"] === "true" ||
+  !!process.env["AWS_LAMBDA_FUNCTION_NAME"] ||
+  !!process.env["LAMBDA_TASK_ROOT"];
 export const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
 const MAX_BYTES = 3 * 1024 * 1024;
 // Raster formats every major browser can render inline via <img>. Deliberately
